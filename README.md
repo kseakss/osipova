@@ -98,58 +98,6 @@ php artisan serve
 
 Приложение будет доступно по адресу `http://127.0.0.1:8000`.
 
-### Роли и доступ
-
-- **participant**
-  - создаёт `submission` в рамках активного `contest`
-  - загружает до 3 файлов (pdf, zip, png, jpg; максимум 10MB каждый)
-  - видит только свои submissions
-  - может редактировать submission только в статусах `draft` и `needs_fix`
-  - может отправлять на рассмотрение (`submitted`), если есть хотя бы один attachment со статусом `scanned`
-  - может оставлять комментарии к своим submissions
-
-- **jury**
-  - видит все submissions
-  - может менять статус по допустимым переходам:
-    - `draft` → `submitted`
-    - `submitted` → `accepted` / `rejected` / `needs_fix`
-    - `needs_fix` → `submitted` / `rejected`
-  - может оставлять комментарии и запрашивать доработку (`needs_fix`)
-
-- **admin**
-  - управляет конкурсами (`contests`)
-  - управляет пользователями и их ролями
-
-### Основные сущности
-
-- **contests**
-  - `id`, `title`, `description`, `deadline_at`, `is_active`, `timestamps`
-
-- **submissions**
-  - `id`, `contest_id`, `user_id`, `title`, `description`, `status`, `timestamps`
-  - статусы: `draft | submitted | needs_fix | accepted | rejected`
-
-- **submission_comments**
-  - `id`, `submission_id`, `user_id`, `body`, `timestamps`
-
-- **attachments**
-  - `id`, `submission_id`, `user_id`, `original_name`, `mime`, `size`, `storage_key`, `status`, `rejection_reason`, `timestamps`
-
-### Очереди и джобы
-
-- **ScanAttachmentJob**
-  - запускается при загрузке файла
-  - проверяет:
-    - расширение (pdf, zip, png, jpg, jpeg)
-    - размер (≤ 10MB)
-    - длину имени файла
-  - при нарушении правил: `status = rejected` + `rejection_reason`
-  - иначе: `status = scanned`
-
-- **NotifyStatusChangedJob**
-  - запускается при смене статуса `submission`
-  - пишет запись в лог через `Log::info` с данными submission и старым/новым статусом
-
 ### API-эндпоинты (основные)
 
 Все маршруты находятся в `routes/api.php` и защищены HTTP Basic Auth (`auth.basic`) + middleware `role`.  
